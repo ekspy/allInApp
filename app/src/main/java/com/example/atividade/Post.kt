@@ -1,8 +1,8 @@
 package com.example.atividade
 
-data class Post (
-    val userId: Int,
+data class Post(
     val id: Int,
-    val Title: String,
-    val body: String,
+    val userId: Int,
+    val title: String,
+    val body: String
 )

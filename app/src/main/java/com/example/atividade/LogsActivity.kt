@@ -1,42 +1,67 @@
 package com.example.atividade
 
-import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import androidx.appcompat.app.AppCompatActivity
+import android.widget.Toast
 import com.example.atividade.databinding.ActivityLogsBinding
 import java.io.File
-import kotlin.math.log
+import java.text.SimpleDateFormat
+import java.util.*
 
-class LogsActivity: AppCompatActivity() {
+class LogsActivity: BaseActivity() {
     private lateinit var binding: ActivityLogsBinding
+    private lateinit var logFile: File
+    private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLogsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val logFile = File(filesDir, "activity_logs.txt")
+        setupToolbar(binding.toolbar.toolbar, title = "Logs")
+        setupLogFile()
+        setupSaveLog()
+        setupViewLogs()
+        loadLogs() // Load logs automatically when opening the screen
+    }
 
+    private fun setupLogFile() {
+        logFile = File(filesDir, "activity_logs.txt")
+        if (!logFile.exists()) {
+            logFile.createNewFile()
+        }
+    }
+
+    private fun setupSaveLog() {
         binding.btnSaveLog.setOnClickListener {
-            val log = binding.etLog.text.toString()
-            if (log.isNotEmpty()) {
-                logFile.appendText("$log em ${System.currentTimeMillis()}\n")
-                binding.etLog.text.clear()
+            val log = binding.etLog.text.toString().trim()
+            
+            when {
+                log.isEmpty() -> {
+                    Toast.makeText(this, "Digite um log para salvar", Toast.LENGTH_SHORT).show()
+                }
+                else -> {
+                    val timestamp = dateFormat.format(Date())
+                    logFile.appendText("[$timestamp] $log\n")
+                    binding.etLog.text.clear()
+                    Toast.makeText(this, "Log salvo com sucesso!", Toast.LENGTH_SHORT).show()
+                    loadLogs() // Reload logs after saving
+                }
             }
         }
+    }
 
+    private fun setupViewLogs() {
         binding.btnViewLogs.setOnClickListener {
-            if (logFile.exists()) {
-                binding.tvLogs.text = "Logs:\n${logFile.readText()}"
-            } else {
-                binding.tvLogs.text = "Nenhum log registrado."
-            }
+            loadLogs()
         }
+    }
 
-        Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(Intent(this, ApiActivity::class.java))
-        }, 10000)
+    private fun loadLogs() {
+        if (logFile.exists() && logFile.length() > 0) {
+            val logs = logFile.readText()
+            binding.tvLogs.text = logs
+        } else {
+            binding.tvLogs.text = "Nenhum log registrado."
+        }
     }
 }
